@@ -14,7 +14,7 @@ typedef enum {
 }tipAtom;
 
 
-char tipAtomTablou[31][10] = { "ID", "INT", "REAL", "STR", "VAR", "FUNCTION", "IF", "ELSE", "WHILE", "END", "RETURN",
+char numeAtomi[31][10] = { "ID", "INT", "REAL", "STR", "VAR", "FUNCTION", "IF", "ELSE", "WHILE", "END", "RETURN",
 							"TYPE_INT", "TYPE_REAL", "TYPE_STR", "COLON", "SEMICOLON", "LPAR", "RPAR",
 							"COMMA", "OR", "AND", "NOT", "EQUAL", "NOTEQUAL", "LESS", "ASSIGN", "ADD", "SUB",
 							"MUL", "DIV", "FINISH" };
@@ -30,19 +30,19 @@ typedef struct {
 
 
 Atom atomi[MAX_ATOMI];
-int nAtomi = 0;	// numarul de atomi din vectorul atomi
+int nrAtomi = 0;	// numarul de atomi din vectorul atomi
 
 
 char bufin[30001];
 char* pch;	// cursor la caracterul curent din bufin
 
 
-char imageBuf[1000];
-int nrImageChars = 0;
+char buf[1000];
+int n = 0;
 int linie = 1;
 
+char tipCuvinteCheie[10][10] = { "var", "funtion", "if", "else", "while", "end", "return", "int", "real", "str" };
 
-char tipCuvintCheie[10][10] = { "var", "funtion", "if", "else", "while", "end", "return", "int", "real", "str" };
 
 // conversie in INT
 int stringToInt(char a[])
@@ -85,31 +85,34 @@ double stringToDouble(char string[])
 
 void addAtom(tipAtom tip)
 {
-	imageBuf[nrImageChars] = 0;
+	buf[n] = 0;
 	if (tip == ID)
 	{
 		for (int i = 4; i < 14; i++)
 		{
-			if (!strcmp(imageBuf, tipCuvintCheie[i - 4]))
+			if (!strcmp(buf, tipCuvinteCheie[i - 4]))
 			{
 				tip = i;
+				//printf("tip = %d, buf = %s\n", i,buf);
 				break;
 			}
 		}
 	}
-	atomi[nAtomi].cod = tip;
-	strcpy_s(atomi[nAtomi].image, 1000, imageBuf);
-	atomi[nAtomi].linieFisier = linie;
+	atomi[nrAtomi].cod = tip;
+	//printf("tip = %d, buf = %s\n", tip, buf);
+	strcpy_s(atomi[nrAtomi].image, 1000, buf);
+	atomi[nrAtomi].linieFisier = linie;
 
-	if (atomi[nAtomi].cod == 1)
+
+	if (atomi[nrAtomi].cod == 1)
 	{
-		atomi[nAtomi].valueInt = stringToInt(atomi[nAtomi].image);
+		atomi[nrAtomi].valueInt = stringToInt(atomi[nrAtomi].image);
 	}
-	if (atomi[nAtomi].cod == 2)
+	if (atomi[nrAtomi].cod == 2)
 	{
-		atomi[nAtomi].valueDouble = stringToDouble(atomi[nAtomi].image);
+		atomi[nrAtomi].valueDouble = stringToDouble(atomi[nrAtomi].image);
 	}
-	nAtomi++;
+	nrAtomi++;
 }
 
 
@@ -118,12 +121,12 @@ void addAtom(tipAtom tip)
 int getNextTk()			// get next token (atom lexical)
 {
 	int stare = 0;		// starea curenta
-	nrImageChars = 0;
+	n = 0;
 
 
 	for (int i = 0; i < 1000; i++)
 	{
-		imageBuf[i] = 0;
+		buf[i] = 0;
 	}
 
 
@@ -140,23 +143,23 @@ int getNextTk()			// get next token (atom lexical)
 			if (isalpha(ch) || ch == '_')
 			{
 				stare = 1;
-				pch++;
-				imageBuf[nrImageChars++] = ch;
+				pch++; // consuma caracterul curent
+				buf[n++] = ch; // caracterul consumat va fi salvat in buffer pentru a putea fi introdus in structura Atom
 			}
 			else if (isdigit(ch))
 			{
 				stare = 3;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t')
 			{ 
 				pch++;
 
-			if (ch == '\n')
-			{ 
-				linie++;
-			} 
+				if (ch == '\n')
+				{
+					linie++;
+				}
 			}
 			else if (ch == '\"')
 			{ 
@@ -173,85 +176,85 @@ int getNextTk()			// get next token (atom lexical)
 			{
 				stare = 11;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == ';')
 			{
 				stare = 12;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '(')
 			{ 
 				stare = 13;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == ')')
 			{ 
 				stare = 14;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == ',')
 			{
 				stare = 15;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '|')
 			{
 				stare = 16;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '&')
 			{
 				stare = 18;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '<')
 			{
 				stare = 20;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '+')
 			{
 				stare = 21;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '-')
 			{
 				stare = 22;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '*') 
 			{
 				stare = 23;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '/')
 			{
 				stare = 24;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '!')
 			{
 			stare = 26;
 			pch++;
-			imageBuf[nrImageChars++] = ch;
+			buf[n++] = ch;
 			}
 			else if (ch == '=')
 			{
 				stare = 27;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			
 			}
 			else if (ch == '\0')
@@ -265,7 +268,7 @@ int getNextTk()			// get next token (atom lexical)
 			if (isalnum(ch) || ch == '_')
 			{
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else
 			{
@@ -282,13 +285,13 @@ int getNextTk()			// get next token (atom lexical)
 			if (isdigit(ch))
 			{
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else if (ch == '.')
 			{
 				stare = 5;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else
 			{
@@ -305,7 +308,7 @@ int getNextTk()			// get next token (atom lexical)
 			{
 				stare = 6;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			break;
 
@@ -313,7 +316,7 @@ int getNextTk()			// get next token (atom lexical)
 			if (isdigit(ch))
 			{
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else
 			{
@@ -329,7 +332,7 @@ int getNextTk()			// get next token (atom lexical)
 			if (ch != '\"')
 			{
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else
 			{
@@ -379,7 +382,7 @@ int getNextTk()			// get next token (atom lexical)
 			{ 
 				stare = 17;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			break;
 
@@ -392,7 +395,7 @@ int getNextTk()			// get next token (atom lexical)
 			{
 				stare = 19;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			break;
 
@@ -429,7 +432,7 @@ int getNextTk()			// get next token (atom lexical)
 			{
 				stare = 29;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else
 			{
@@ -442,7 +445,7 @@ int getNextTk()			// get next token (atom lexical)
 			{
 				stare = 30;
 				pch++;
-				imageBuf[nrImageChars++] = ch;
+				buf[n++] = ch;
 			}
 			else 
 			{ 
@@ -467,7 +470,7 @@ int getNextTk()			// get next token (atom lexical)
 			return ASSIGN;
 
 		default:
-			printf("Linia %d:  stare invalida %d\n", linie, stare);
+			printf("Linia %d ->  stare invalida %d\n", linie, stare);
 		}
 	}
 }
@@ -476,35 +479,35 @@ int getNextTk()			// get next token (atom lexical)
 
 void afisareAtomiLexicali()
 {
-	for (int i = 0; i < nAtomi; i++)
+	for (int i = 0; i < nrAtomi; i++)
 	{
 		// daca atomul este ID
 		if (atomi[i].cod == 0)
 		{
 																// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
-			printf("Linia %d:  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
+			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
 		}
 		// daca atomul este INT
 		else if (atomi[i].cod == 1)
 		{
 			atomi[i].valueInt = stringToInt(atomi[i].image);
-			printf("Linia %d:  %s : %d\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].valueInt);
+			printf("Linia %d ->  %s : %d\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueInt);
 		}
 		// daca atomul este REAL
 		else if (atomi[i].cod == 2)
 		{
 			atomi[i].valueDouble = stringToDouble(atomi[i].image);
-			printf("Linia %d:  %s : %lf\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].valueDouble);
+			printf("Linia %d ->  %s : %lf\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueDouble);
 		}
 		// daca atomul este STR
 		else if (atomi[i].cod == 3)
 		{
-			printf("Linia %d:  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
+			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
 		}
 		else
 		{
-			printf("Linia %d:  %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod]);
-			//printf("Linia %d:  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
+			printf("Linia %d ->  %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod]);
+			//printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
 		}
 	}
 }
@@ -537,5 +540,4 @@ void analizatorLexical()
 int main()
 {
 	analizatorLexical();
-	//printf("Numarul de atomi din vector de atomi : %d", nAtomi);
 }
