@@ -85,7 +85,7 @@ double stringToDouble(char string[])
 
 void addAtom(tipAtom tip)
 {
-	buf[n] = 0;
+	buf[n] = '\0';
 	if (tip == ID)
 	{
 		for (int i = 4; i < 14; i++)
@@ -126,15 +126,15 @@ int getNextTk()			// get next token (atom lexical)
 
 	for (int i = 0; i < 1000; i++)
 	{
-		buf[i] = 0;
+		buf[i] = '\0';
 	}
 
 
 	for (;;) {
 
 		char ch = *pch;	// caracterul curent
-		//printf("#%d %c(%d)\n", stare, ch, ch);	// pentru debugging
 		
+
 		// cate un case pentru fiecare stare din diagrama
 		switch (stare) {
 
@@ -146,7 +146,7 @@ int getNextTk()			// get next token (atom lexical)
 				pch++; // consuma caracterul curent
 				buf[n++] = ch; // caracterul consumat va fi salvat in buffer pentru a putea fi introdus in structura Atom
 			}
-			else if (isdigit(ch))
+			else if (isdigit(ch)) // daca este cifra
 			{
 				stare = 3;
 				pch++;
@@ -158,7 +158,7 @@ int getNextTk()			// get next token (atom lexical)
 
 				if (ch == '\n')
 				{
-					linie++;
+					linie++; // incrementare linie fisier
 				}
 			}
 			else if (ch == '\"')
@@ -484,7 +484,6 @@ void afisareAtomiLexicali()
 		// daca atomul este ID
 		if (atomi[i].cod == 0)
 		{
-																// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
 			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
 		}
 		// daca atomul este INT
@@ -526,12 +525,14 @@ void analizatorLexical()
 	}
 
 	int n = fread(bufin, 1, 30000, fisier);	// returneaza nr de elemente citite integral
-	bufin[n] = '\0';
+	bufin[n] = '\0'; // se adauga terminatorul de sir la finalul buffer-ului
 	fclose(fisier);
 	pch = bufin;	// initializare pch pe prima pozitie din bufin
+	
 	// extragere atomi
 	while (getNextTk() != FINISH) {
 	}
+	
 	afisareAtomiLexicali();
 	printf("\n\n");
 }
