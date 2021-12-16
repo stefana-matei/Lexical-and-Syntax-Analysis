@@ -484,6 +484,7 @@ void afisareAtomiLexicali()
 		// daca atomul este ID
 		if (atomi[i].cod == 0)
 		{
+			// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
 			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
 		}
 		// daca atomul este INT
