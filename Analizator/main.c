@@ -23,7 +23,7 @@ char numeAtomi[31][10] = { "ID", "INT", "REAL", "STR", "VAR", "FUNCTION", "IF", 
 typedef struct {
 	int cod;	// codul atomului
 	int linieFisier;
-	char image[1000];
+	char stringValue[1000];
 	int valueInt;
 	double valueDouble;
 }Atom;
@@ -31,7 +31,7 @@ typedef struct {
 
 Atom atomi[MAX_ATOMI];
 int nrAtomi = 0;	// numarul de atomi din vectorul atomi
-
+int idxCrtAtom = 0;	// atomul curent pentru analiza sintactica
 
 char bufin[30001];
 char* pch;	// cursor la caracterul curent din bufin
@@ -100,17 +100,17 @@ void addAtom(tipAtom tip)
 	}
 	atomi[nrAtomi].cod = tip;
 	//printf("tip = %d, buf = %s\n", tip, buf);
-	strcpy_s(atomi[nrAtomi].image, 1000, buf);
+	strcpy_s(atomi[nrAtomi].stringValue, 1000, buf);
 	atomi[nrAtomi].linieFisier = linie;
 
 
 	if (atomi[nrAtomi].cod == 1)
 	{
-		atomi[nrAtomi].valueInt = stringToInt(atomi[nrAtomi].image);
+		atomi[nrAtomi].valueInt = stringToInt(atomi[nrAtomi].stringValue);
 	}
 	if (atomi[nrAtomi].cod == 2)
 	{
-		atomi[nrAtomi].valueDouble = stringToDouble(atomi[nrAtomi].image);
+		atomi[nrAtomi].valueDouble = stringToDouble(atomi[nrAtomi].stringValue);
 	}
 	nrAtomi++;
 }
@@ -485,24 +485,24 @@ void afisareAtomiLexicali()
 		if (atomi[i].cod == 0)
 		{
 			// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
-			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
+			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].stringValue);
 		}
 		// daca atomul este INT
 		else if (atomi[i].cod == 1)
 		{
-			atomi[i].valueInt = stringToInt(atomi[i].image);
+			atomi[i].valueInt = stringToInt(atomi[i].stringValue);
 			printf("Linia %d ->  %s : %d\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueInt);
 		}
 		// daca atomul este REAL
 		else if (atomi[i].cod == 2)
 		{
-			atomi[i].valueDouble = stringToDouble(atomi[i].image);
+			atomi[i].valueDouble = stringToDouble(atomi[i].stringValue);
 			printf("Linia %d ->  %s : %lf\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueDouble);
 		}
 		// daca atomul este STR
 		else if (atomi[i].cod == 3)
 		{
-			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].image);
+			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].stringValue);
 		}
 		else
 		{
@@ -510,6 +510,38 @@ void afisareAtomiLexicali()
 			//printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
 		}
 	}
+}
+
+
+//---------------------------------------------------
+//	analiza sintatica
+
+
+// functia consume - se foloseste pentru a consuma atomi lexicali
+// daca la pozitia curenta a analizei lexicale avem un atom cu codul "cod",
+// atunci se trece mai departe (se consuma atomul respectiv) si se returneaza true
+// altfel, sa ramana la atomul curent si se returneaza false
+int consume(int cod) 
+{
+	//	printAtom();
+	if (atomi[idxCrtAtom].cod == cod) {
+		//		printAtom();
+		idxCrtAtom++;
+		return 1;
+	}
+	//	printAtom();
+	return 0;
+}
+
+
+// afiseaza locatia atomului curent (idxCrtAtom)
+// afiseaza mesajul de eroare
+// iese din program
+// eroare in linia 5: lipseste numele variabilei
+void afisareEroare(const char* mesaj)
+{
+	printf("Eroare in linia %d: %s", atomi[idxCrtAtom].linieFisier, mesaj);
+	exit(1);
 }
 
 
