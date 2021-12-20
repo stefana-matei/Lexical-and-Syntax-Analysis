@@ -513,38 +513,6 @@ void afisareAtomiLexicali()
 }
 
 
-//---------------------------------------------------
-//	analiza sintatica
-
-
-// functia consume - se foloseste pentru a consuma atomi lexicali
-// daca la pozitia curenta a analizei lexicale avem un atom cu codul "cod",
-// atunci se trece mai departe (se consuma atomul respectiv) si se returneaza true
-// altfel, sa ramana la atomul curent si se returneaza false
-int consume(int cod) 
-{
-	//	printAtom();
-	if (atomi[idxCrtAtom].cod == cod) {
-		//		printAtom();
-		idxCrtAtom++;
-		return 1;
-	}
-	//	printAtom();
-	return 0;
-}
-
-
-// afiseaza locatia atomului curent (idxCrtAtom)
-// afiseaza mesajul de eroare
-// iese din program
-// eroare in linia 5: lipseste numele variabilei
-void afisareEroare(const char* mesaj)
-{
-	printf("Eroare in linia %d: %s", atomi[idxCrtAtom].linieFisier, mesaj);
-	exit(1);
-}
-
-
 // metoda ce va realiza analiza lexicala 
 void analizatorLexical()
 {
@@ -561,17 +529,152 @@ void analizatorLexical()
 	bufin[n] = '\0'; // se adauga terminatorul de sir la finalul buffer-ului
 	fclose(fisier);
 	pch = bufin;	// initializare pch pe prima pozitie din bufin
-	
+
 	// extragere atomi
 	while (getNextTk() != FINISH) {
 	}
-	
+
 	afisareAtomiLexicali();
 	printf("\n\n");
 }
 
 
+
+
+//--------------------------------------------------------------------------------
+//	analiza sintatica
+
+
+// functia consume - se foloseste pentru a consuma atomi lexicali
+// daca la pozitia curenta a analizei lexicale avem un atom cu codul "cod",
+// atunci se trece mai departe (se consuma atomul respectiv) si se returneaza true
+// altfel, sa ramana la atomul curent si se returneaza false
+int consume(int cod) 
+{
+	if (atomi[idxCrtAtom].cod == cod) {
+
+		idxCrtAtom++;
+		return 1;
+	}
+
+	return 0;
+}
+
+
+// afiseaza locatia atomului curent (idxCrtAtom)
+// afiseaza mesajul de eroare
+// iese din program
+void afisareEroare(const char* mesaj)
+{
+	printf("Eroare in linia %d: %s", atomi[idxCrtAtom].linieFisier, mesaj);
+	exit(1);
+}
+
+
+// factor ::= INT | REAL | STR | LPAR expr RPAR | ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
+int factor()
+{
+	int startIdx = idxCrtAtom;
+	if (consume(INT) || consume(REAL) || consume(STR))
+	{
+		return 1;
+	}
+
+	// LPAR expr RPAR
+	if (consume(LPAR))
+	{
+		if (expr())
+		{
+			if (consume(RPAR))
+			{
+				return 1;
+			}
+			else 
+				afisareEroare("Lipseste ) dupa expresie\n");
+		}
+		else
+			afisareEroare("Expresie gresita dupa (\n");
+	}
+
+
+	// ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
+	if (consume(ID))
+	{
+		if (consume(LPAR))
+		{
+			if (expr())
+			{
+				for (;;)
+				{
+					if (consume(COMMA))
+					{
+						if (expr())
+						{
+							;
+						}
+						else
+						{
+							afisareEroare("Lipseste expresie dupa ,\n");
+							idxCrtAtom = startIdx;
+							return 0;
+						}
+					}
+					else
+						break;
+				}
+			}
+			if (consume(RPAR))
+			{
+				return 1;
+			}
+			else
+			{
+				afisareEroare("Lipseste )\n");
+				idxCrtAtom = startIdx;
+				return 0;
+			}
+		}
+		return 1;
+	}
+
+	//	afisareEroare("Lipseste factor\n");
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// expr ::= exprLogic
+int expr()
+{
+	int startIdx = idxCrtAtom;
+
+	if (exprLogic())
+	{
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// exprLogic ::= exprAssign ( ( AND | OR ) exprAssign )*
+int exprLogic()
+{
+	int startIdx = idxCrtAtom;
+
+	
+}
+
+
+
+
+
+
 int main()
 {
 	analizatorLexical();
+
+	return 0;
 }
