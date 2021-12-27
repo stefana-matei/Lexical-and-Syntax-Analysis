@@ -571,6 +571,33 @@ void afisareEroare(const char* mesaj)
 }
 
 
+/*
+- fiecare regula sintactica devine o functie fara parametri care consuma atomii corespunzatori corpului ei
+ex: functiile program, defVar, baseType, ...
+- fiecare functie returneaza true daca a reusit sa consume tot corpul ei, altfel returneaza false
+- daca o functie returneaza false, nu trebuie sa modifice pozitia curenta la care am ajuns cu analiza sintactica
+- atomii se consuma folosind o functie speciala, numita consume
+- regulile se consuma, apelandu-se in mod direct
+*/
+
+int factor();
+int baseType();
+int defFunc();
+int expr();
+int exprAssign();
+int exprComp();
+int exprLogic();
+int exprAdd();
+int exprMul();
+int exprPrefix();
+int instr();
+int block();
+int funcParam();
+int funcParams();
+int defVar();
+
+
+
 // factor ::= INT | REAL | STR | LPAR expr RPAR | ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
 int factor()
 {
@@ -644,6 +671,84 @@ int factor()
 }
 
 
+// baseType ::= TYPE_INT | TYPE_REAL | TYPE_STR
+int baseType()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(TYPE_INT) || consume(TYPE_REAL) || consume(TYPE_STR)) 
+	{
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// defFunc :: = FUNCTION ID LPAR funcParams RPAR COLON baseType defVar * block END
+int defFunc()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(FUNCTION)) 
+	{
+		if (consume(ID))
+		{
+			if (consume(LPAR))
+			{
+				if (funcParams())
+				{
+					if (consume(RPAR))
+					{
+						if (consume(COLON))
+						{
+							if (baseType())
+							{
+								for (;;)
+								{
+									if (defVar())
+									{
+										;
+									}
+									else
+										break;
+								}
+
+								if (block())
+								{
+									if (consume(END))
+									{
+										return 1;
+									}
+									else
+										afisareEroare("Lipseste *END* dupa block.\n");
+								}
+								else
+									afisareEroare("Lipseste *BLOCK*.\n");
+							}
+							else
+								afisareEroare("Lipseste tipul de variabila pentru functie SAU tipul nu este valid.\n");
+						}
+						else
+							afisareEroare("Lipseste : dupa ).\n");
+					}
+					else
+						afisareEroare("Lipseste ) dupa (funcParams.\n");
+				}
+
+			}
+			else
+				afisareEroare("Lipseste ( dupa numele functiei.\n");
+		}
+		else
+			afisareEroare("Lipseste numele functiei.\n");
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
 // expr ::= exprLogic
 int expr()
 {
@@ -659,16 +764,131 @@ int expr()
 }
 
 
+// exprAssign ::= ( ID ASSIGN )? exprComp
+int exprAssign()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(ID)) 
+	{
+		if(consume(ASSIGN))
+		{
+			if (exprComp())
+			{
+				return 1;
+			}
+			else
+				afisareEroare("Lipseste exprComp.\n");
+		}
+		else
+		{
+			idxCrtAtom = startIdx;
+		}
+	}
+
+	if (exprComp)
+	{
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// exprComp ::= exprAdd ( ( LESS | EQUAL ) exprAdd )?
+int exprComp()
+{
+	int startIdx = idxCrtAtom;
+
+	if (exprAdd())
+	{
+		if (consume(LESS) || consume(EQUAL))
+		{
+			if (exprAdd)
+			{
+				return 1;
+			}
+			else
+				afisareEroare("Lipseste exprAdd dupa < sau dupa =.\n");
+		}
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
 // exprLogic ::= exprAssign ( ( AND | OR ) exprAssign )*
 int exprLogic()
 {
 	int startIdx = idxCrtAtom;
 
-	
+	if (exprAssign())
+	{
+		for (;;)
+		{
+			if (consume(AND) || consume(OR))
+			{
+				if (exprAssign())
+				{
+					;
+				}
+				else
+				{
+					afisareEroare("Lipseste exprAssign dupa & sau dupa |.\n");
+					idxCrtAtom = startIdx;
+					return 0;
+				}
+			}
+			else
+				break;
+		}
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+// exprAdd :: = exprMul((ADD | SUB) exprMul) *
+int exprAdd()
+{
+	int startIdx = idxCrtAtom;
+
+	if (exprMul)
+	{
+		for (;;)
+		{
+			if (consume(ADD) || consume(SUB))
+			{
+				if (exprMul)
+				{
+					;
+				}
+				else
+				{
+					afisareEroare("Lipseste exprMul dupa + sau -.\n");
+					idxCrtAtom = startIdx;
+					return 0;
+				}
+			}
+			else
+				break;
+		}
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
 }
 
 
-
+// exprMul ::= exprPrefix ( ( MUL | DIV ) exprPrefix )*
+int exprMul()
+{
+	return 0;
+}
 
 
 
