@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#define _CRT_SECURE_NO_WARNINGS
 #define MAX_ATOMI 10000
 
 
@@ -21,7 +20,7 @@ char numeAtomi[31][10] = { "ID", "INT", "REAL", "STR", "VAR", "FUNCTION", "IF", 
 };
 
 
-char tipCuvinteCheie[10][10] = { "var", "funtion", "if", "else", "while", "end", "return", "int", "real", "str" };
+char tipCuvinteCheie[10][10] = { "var", "function", "if", "else", "while", "end", "return", "int", "real", "str" };
 
 
 union lexicalInformation
@@ -30,7 +29,6 @@ union lexicalInformation
 	int valueInt;
 	double valueDouble;
 };
-
 
 
 typedef struct {
@@ -50,7 +48,8 @@ char* pch;	// cursor la caracterul curent din bufin
 
 char buf[1000];
 int n = 0;
-int linie = 1;
+
+int linie = 1;	// linia curenta; adaugata automat la atom de addAtom
 
 
 // conversie in INT
@@ -94,7 +93,7 @@ double stringToDouble(char string[])
 
 void addAtom(tipAtom tip)
 {
-	buf[n] = '\0';
+	buf[n] = 0;
 
 	if (tip == ID)
 	{
@@ -128,6 +127,7 @@ void addAtom(tipAtom tip)
 	}
 	nrAtomi++;
 }
+
 
 // afisarea atomilor lexicali
 void afisareAtomiLexicali()
@@ -175,8 +175,6 @@ void afisareAtomiLexicali()
 			}
 		}
 	}
-
-
 }
 
 
@@ -189,7 +187,7 @@ int getNextTk()			// get next token (atom lexical)
 
 	for (int i = 0; i < 1000; i++)
 	{
-		buf[i] = '\0';
+		buf[i] = 0;
 	}
 
 
@@ -645,13 +643,11 @@ int factor()
 				return 1;
 			}
 			else 
-				afisareEroare("Lipseste ) dupa expresie\n");
+				afisareEroare("Lipseste ) dupa expresie.\n");
 		}
 		else
 			afisareEroare("Expresie gresita dupa (\n");
 	}
-
-
 	// ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
 	if (consume(ID))
 	{
@@ -741,7 +737,6 @@ int defFunc()
 									else
 										break;
 								}
-
 								if (block())
 								{
 									if (consume(END))
@@ -931,7 +926,7 @@ int exprMul()
 				}
 				else
 				{
-					afisareEroare("Lipseste Lipseste expresia ce urmeaza dupa * sau dupa /.\n");
+					afisareEroare("Lipseste expresia ce urmeaza dupa * sau dupa /.\n");
 					idxCrtAtom = startIdx;
 					return 0;
 				}
@@ -959,9 +954,8 @@ int exprPrefix()
 			return 1;
 		}
 		else
-			afisareEroare("Lipseste factor dupa - sau dupa !.\n");
+			afisareEroare("Lipseste factor dupa - sau dupa ! .\n");
 	}
-
 	if (factor())
 	{
 		return 1;
@@ -1017,7 +1011,6 @@ int instr()
 								return 0;
 							}
 						}
-
 						if (consume(END))
 						{
 							return 1;
@@ -1032,7 +1025,7 @@ int instr()
 					afisareEroare("Lipseste ) dupa expresie.\n");
 			}
 			else
-				afisareEroare("Lipseste expr dupa (.\n");
+				afisareEroare("Lipseste expresie dupa (.\n");
 		}
 		else
 			afisareEroare("lipseste ( dupa if.\n");
@@ -1073,7 +1066,7 @@ int instr()
 					afisareEroare("Lipseste ) dupa expresie.\n");
 			}
 			else
-				afisareEroare("Lipseste expresia dupa (.\n");
+				afisareEroare("Lipseste expresie dupa (.\n");
 		}
 		else
 			afisareEroare("Lipseste ( dupa while.\n");
@@ -1118,12 +1111,15 @@ int funcParam()
 		if (consume(COLON))
 		{
 			if (baseType())
+			{
 				return 1;
+			}
+				
 			else
 				afisareEroare("Lipseste tipul variabilei sau tipul variabilei este invalid.\n");
 		}
 		else
-			afisareEroare("Lipseste : dupa numele variabilei.\n");
+			afisareEroare("Lipseste : dupa numele parametrului.\n");
 	}
 
 	idxCrtAtom = startIdx;
@@ -1177,18 +1173,20 @@ int defVar()
 				if (baseType())
 				{
 					if (consume(SEMICOLON))
+					{
 						return 1;
+					}
 					else
-						afisareEroare("Lipseste ; la finalul declaratiei parametrului.\n");
+						afisareEroare("Lipseste ; la finalul declaratiei de variabila.\n");
 				}
 				else
-					afisareEroare("Lipseste tipul parametrului sau tipul este invalid.\n");
+					afisareEroare("Lipseste tipul variabilei sau tipul este invalid.\n");
 			}
 			else
-				afisareEroare("Lipseste : dupa numele parametrului.\n");
+				afisareEroare("Lipseste : dupa numele variabilei.\n");
 		}
 		else
-			afisareEroare("Lipseste numele parametrului.\n");
+			afisareEroare("Lipseste numele variabilei.\n");
 	}
 
 	idxCrtAtom = startIdx;
@@ -1203,18 +1201,9 @@ int program()
 
 	for (;;)
 	{
-		if (defVar())
-		{
-			
-		}
-		else if (defFunc())
-		{
-			
-		}
-		else if (block())
-		{
-			
-		}
+		if (defVar()) {}
+		else if (defFunc()) {}
+		else if (block()) {}
 		else
 			break;
 	}
@@ -1229,6 +1218,7 @@ int program()
 	idxCrtAtom = startIdx;
 	return 0;
 }
+
 
 
 int main()
