@@ -17,15 +17,26 @@ typedef enum {
 char numeAtomi[31][10] = { "ID", "INT", "REAL", "STR", "VAR", "FUNCTION", "IF", "ELSE", "WHILE", "END", "RETURN",
 							"TYPE_INT", "TYPE_REAL", "TYPE_STR", "COLON", "SEMICOLON", "LPAR", "RPAR",
 							"COMMA", "OR", "AND", "NOT", "EQUAL", "NOTEQUAL", "LESS", "ASSIGN", "ADD", "SUB",
-							"MUL", "DIV", "FINISH" };
+							"MUL", "DIV", "FINISH" 
+};
+
+
+char tipCuvinteCheie[10][10] = { "var", "funtion", "if", "else", "while", "end", "return", "int", "real", "str" };
+
+
+union lexicalInformation
+{
+	char stringValue[1000];
+	int valueInt;
+	double valueDouble;
+};
+
 
 
 typedef struct {
 	int cod;	// codul atomului
-	int linieFisier;
-	char stringValue[1000];
-	int valueInt;
-	double valueDouble;
+	int linie;
+	union lexicalInformation lexicalInfo;
 }Atom;
 
 
@@ -40,8 +51,6 @@ char* pch;	// cursor la caracterul curent din bufin
 char buf[1000];
 int n = 0;
 int linie = 1;
-
-char tipCuvinteCheie[10][10] = { "var", "funtion", "if", "else", "while", "end", "return", "int", "real", "str" };
 
 
 // conversie in INT
@@ -73,6 +82,7 @@ int stringToInt(char a[])
 	return n;
 }
 
+
 // conversie in REAL
 double stringToDouble(char string[])
 {
@@ -82,10 +92,10 @@ double stringToDouble(char string[])
 }
 
 
-
 void addAtom(tipAtom tip)
 {
 	buf[n] = '\0';
+
 	if (tip == ID)
 	{
 		for (int i = 4; i < 14; i++)
@@ -100,21 +110,74 @@ void addAtom(tipAtom tip)
 	}
 	atomi[nrAtomi].cod = tip;
 	//printf("tip = %d, buf = %s\n", tip, buf);
-	strcpy_s(atomi[nrAtomi].stringValue, 1000, buf);
-	atomi[nrAtomi].linieFisier = linie;
+	//strcpy_s(atomi[nrAtomi].stringValue, 1000, buf);
+	atomi[nrAtomi].linie = linie;
 
 
 	if (atomi[nrAtomi].cod == 1)
 	{
-		atomi[nrAtomi].valueInt = stringToInt(atomi[nrAtomi].stringValue);
+		atomi[nrAtomi].lexicalInfo.valueInt = stringToInt(buf);
 	}
-	if (atomi[nrAtomi].cod == 2)
+	else if (atomi[nrAtomi].cod == 2)
 	{
-		atomi[nrAtomi].valueDouble = stringToDouble(atomi[nrAtomi].stringValue);
+		atomi[nrAtomi].lexicalInfo.valueDouble = stringToDouble(buf);
+	}
+	else
+	{
+		strcpy_s(atomi[nrAtomi].lexicalInfo.stringValue, 1000, buf);
 	}
 	nrAtomi++;
 }
 
+// afisarea atomilor lexicali
+void afisareAtomiLexicali()
+{
+	int linieAfisare = 0;
+
+	if (linieAfisare < atomi[0].linie)
+	{
+		linieAfisare = atomi[0].linie;
+		printf("Linia %d: ", linieAfisare);
+
+		for (int i = 0; i < nrAtomi; i++)
+		{
+
+			if (linieAfisare < atomi[i].linie)
+			{
+				linieAfisare = atomi[i].linie;
+				printf("\nLinia %d: ", linieAfisare);
+			}
+			// daca atomul este ID
+			if (atomi[i].cod == 0)
+			{
+				// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
+				printf(" %s : %s, ", numeAtomi[atomi[i].cod], atomi[i].lexicalInfo.stringValue);
+			}
+			// daca atomul este INT
+			else if (atomi[i].cod == 1)
+			{
+				printf(" %s : %d, ", numeAtomi[atomi[i].cod], atomi[i].lexicalInfo.valueInt);
+			}
+			// daca atomul este REAL
+			else if (atomi[i].cod == 2)
+			{
+				printf(" %s : %lf, ", numeAtomi[atomi[i].cod], atomi[i].lexicalInfo.valueDouble);
+			}
+			// daca atomul este STR
+			else if (atomi[i].cod == 3)
+			{
+				printf(" %s : %s, ", numeAtomi[atomi[i].cod], atomi[i].lexicalInfo.stringValue);
+			}
+			else
+			{
+				printf("%s, ", numeAtomi[atomi[i].cod]);
+				//printf("Linia %d ->  %s : %s", atomi[i].linie, numeAtomi[atomi[i].cod], atomi[i].lexicalInfo.stringValue);
+			}
+		}
+	}
+
+
+}
 
 
 // la fiecare apel returneaza codul unui atom
@@ -158,7 +221,7 @@ int getNextTk()			// get next token (atom lexical)
 
 				if (ch == '\n')
 				{
-					linie++; // incrementare linie fisier
+					linie++; // incrementare linieAfisare fisier
 				}
 			}
 			else if (ch == '\"')
@@ -476,43 +539,6 @@ int getNextTk()			// get next token (atom lexical)
 }
 
 
-
-void afisareAtomiLexicali()
-{
-	for (int i = 0; i < nrAtomi; i++)
-	{
-		// daca atomul este ID
-		if (atomi[i].cod == 0)
-		{
-			// in interiorul parantezelor patrate este codul atomului corespunzator, indexul codului din enumeratia tipAtom
-			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].stringValue);
-		}
-		// daca atomul este INT
-		else if (atomi[i].cod == 1)
-		{
-			atomi[i].valueInt = stringToInt(atomi[i].stringValue);
-			printf("Linia %d ->  %s : %d\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueInt);
-		}
-		// daca atomul este REAL
-		else if (atomi[i].cod == 2)
-		{
-			atomi[i].valueDouble = stringToDouble(atomi[i].stringValue);
-			printf("Linia %d ->  %s : %lf\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].valueDouble);
-		}
-		// daca atomul este STR
-		else if (atomi[i].cod == 3)
-		{
-			printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod], atomi[i].stringValue);
-		}
-		else
-		{
-			printf("Linia %d ->  %s\n", atomi[i].linieFisier, numeAtomi[atomi[i].cod]);
-			//printf("Linia %d ->  %s : %s\n", atomi[i].linieFisier, tipAtomTablou[atomi[i].cod], atomi[i].image);
-		}
-	}
-}
-
-
 // metoda ce va realiza analiza lexicala 
 void analizatorLexical()
 {
@@ -531,7 +557,9 @@ void analizatorLexical()
 	pch = bufin;	// initializare pch pe prima pozitie din bufin
 
 	// extragere atomi
-	while (getNextTk() != FINISH) {
+	while (getNextTk() != FINISH)
+	{
+
 	}
 
 	afisareAtomiLexicali();
@@ -552,7 +580,6 @@ void analizatorLexical()
 int consume(int cod) 
 {
 	if (atomi[idxCrtAtom].cod == cod) {
-
 		idxCrtAtom++;
 		return 1;
 	}
@@ -566,7 +593,7 @@ int consume(int cod)
 // iese din program
 void afisareEroare(const char* mesaj)
 {
-	printf("Eroare in linia %d: %s", atomi[idxCrtAtom].linieFisier, mesaj);
+	printf("Eroare in linia %d: %s", atomi[idxCrtAtom].linie, mesaj);
 	exit(1);
 }
 
@@ -580,21 +607,22 @@ ex: functiile program, defVar, baseType, ...
 - regulile se consuma, apelandu-se in mod direct
 */
 
-int factor();
+int program();
+int defVar();
 int baseType();
 int defFunc();
+int block();
+int funcParams();
+int funcParam();
+int instr();
 int expr();
+int exprLogic();
 int exprAssign();
 int exprComp();
-int exprLogic();
 int exprAdd();
 int exprMul();
 int exprPrefix();
-int instr();
-int block();
-int funcParam();
-int funcParams();
-int defVar();
+int factor();
 
 
 
@@ -664,7 +692,6 @@ int factor()
 		return 1;
 	}
 
-	//	afisareEroare("Lipseste factor\n");
 
 	idxCrtAtom = startIdx;
 	return 0;
@@ -722,19 +749,19 @@ int defFunc()
 										return 1;
 									}
 									else
-										afisareEroare("Lipseste *END* dupa block.\n");
+										afisareEroare("Lipseste END dupa block.\n");
 								}
 								else
-									afisareEroare("Lipseste *BLOCK*.\n");
+									afisareEroare("Lipseste BLOCK.\n");
 							}
 							else
-								afisareEroare("Lipseste tipul de variabila pentru functie SAU tipul nu este valid.\n");
+								afisareEroare("Lipseste tipul returnat de functie SAU tipul nu este valid.\n");
 						}
 						else
 							afisareEroare("Lipseste : dupa ).\n");
 					}
 					else
-						afisareEroare("Lipseste ) dupa (funcParams.\n");
+						afisareEroare("Lipseste ) dupa declararea variabilelor.\n");
 				}
 
 			}
@@ -778,7 +805,7 @@ int exprAssign()
 				return 1;
 			}
 			else
-				afisareEroare("Lipseste exprComp.\n");
+				afisareEroare("Lipseste expresia ce urmeaza dupa = .\n");
 		}
 		else
 		{
@@ -809,8 +836,8 @@ int exprComp()
 				return 1;
 			}
 			else
-				errPrint("lipseste exprAdd dupa < sau dupa =\n");
-			
+				afisareEroare("Lipseste expresia ce urmeaza dupa < sau dupa =\n");
+
 			idxCrtAtom = startIdx;
 			return 0;
 		}
@@ -839,7 +866,7 @@ int exprLogic()
 				}
 				else
 				{
-					afisareEroare("Lipseste exprAssign dupa & sau dupa |.\n");
+					afisareEroare("Lipseste expresia ce urmeaza dupa & sau dupa |.\n");
 					idxCrtAtom = startIdx;
 					return 0;
 				}
@@ -859,19 +886,19 @@ int exprAdd()
 {
 	int startIdx = idxCrtAtom;
 
-	if (exprMul)
+	if (exprMul())
 	{
 		for (;;)
 		{
 			if (consume(ADD) || consume(SUB))
 			{
-				if (exprMul)
+				if (exprMul())
 				{
 					;
 				}
 				else
 				{
-					afisareEroare("Lipseste exprMul dupa + sau -.\n");
+					afisareEroare("Lipseste expresia ce urmeaza dupa + sau -.\n");
 					idxCrtAtom = startIdx;
 					return 0;
 				}
@@ -898,13 +925,13 @@ int exprMul()
 		{
 			if (consume(MUL) || consume(DIV))
 			{
-				if (exprPrefix)
+				if (exprPrefix())
 				{
 					;
 				}
 				else
 				{
-					afisareEroare("Lipseste exprPrefix dupa * sau dupa /.\n");
+					afisareEroare("Lipseste Lipseste expresia ce urmeaza dupa * sau dupa /.\n");
 					idxCrtAtom = startIdx;
 					return 0;
 				}
@@ -960,21 +987,264 @@ int instr()
 			return 1;
 		}
 		else
-			afisareEroare("Lipseste ; dupa expr.\n");
+			afisareEroare("Lipseste ; dupa expresie.\n");
 	}
 	else if (consume(SEMICOLON))
 	{
 		return 1;
 	}
+	//	| IF LPAR expr RPAR block ( ELSE block )? END
+	else if (consume(IF))
+	{
+		if (consume(LPAR))
+		{
+			if (expr())
+			{
+				if (consume(RPAR))
+				{
+					if (block())
+					{
+						if (consume(ELSE))
+						{
+							if (block())
+							{
+								;
+							}
+							else
+							{
+								afisareEroare("Lipseste block dupa else.\n");
+								idxCrtAtom = startIdx;
+								return 0;
+							}
+						}
 
+						if (consume(END))
+						{
+							return 1;
+						}
+						else
+							afisareEroare("Lipseste end dupa block.\n");
+					}
+					else
+						afisareEroare("Lipseste block dupa ).\n");
+				}
+				else
+					afisareEroare("Lipseste ) dupa expresie.\n");
+			}
+			else
+				afisareEroare("Lipseste expr dupa (.\n");
+		}
+		else
+			afisareEroare("lipseste ( dupa if.\n");
+	}
+	//	| RETURN expr SEMICOLON
+	else if (consume(RETURN))
+	{
+		if (expr())
+		{
+			if (consume(SEMICOLON))
+				return 1;
+			else
+				afisareEroare("Lipseste ; dupa expresie.\n");
+		}
+		else
+			afisareEroare("Lipseste expresia dupa RETURN.\n");
+	}
+	//	| WHILE LPAR expr RPAR block END
+	else if (consume(WHILE))
+	{
+		if (consume(LPAR))
+		{
+			if (expr())
+			{
+				if (consume(RPAR))
+				{
+					if (block())
+					{
+						if (consume(END))
+							return 1;
+						else
+							afisareEroare("Lipseste end dupa block.\n");
+					}
+					else
+						afisareEroare("Lipseste block dupa ).\n");
+				}
+				else
+					afisareEroare("Lipseste ) dupa expresie.\n");
+			}
+			else
+				afisareEroare("Lipseste expresia dupa (.\n");
+		}
+		else
+			afisareEroare("Lipseste ( dupa while.\n");
+	}
+
+	idxCrtAtom = startIdx;
 	return 0;
 }
 
+
+ // block ::= instr+
+int block()
+{
+	int startIdx = idxCrtAtom;
+
+	if (instr())
+	{
+		for (;;)
+		{
+			if (instr())
+			{
+				;
+			}
+			else
+				break;
+		}
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+//	funcParam ::= ID COLON baseType
+int funcParam()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(ID))
+	{
+		if (consume(COLON))
+		{
+			if (baseType())
+				return 1;
+			else
+				afisareEroare("Lipseste tipul variabilei sau tipul variabilei este invalid.\n");
+		}
+		else
+			afisareEroare("Lipseste : dupa numele variabilei.\n");
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+//	funcParams ::= ( funcParam ( COMMA funcParam )* )?
+int funcParams()
+{
+	int startIdx = idxCrtAtom;
+
+	if (funcParam())
+	{
+		for (;;)
+		{
+			if (consume(COMMA))
+			{
+				if (funcParam())
+				{
+					;
+				}
+				else
+				{
+					afisareEroare("Lipseste parametru dupa virgula sau este virgula in plus.\n");
+					idxCrtAtom = startIdx;
+					return 0;
+				}
+			}
+			else
+				break;
+		}
+		return 1;
+	}
+
+	return 1;
+}
+
+
+//	VAR ID COLON baseType SEMICOLON
+int defVar()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(VAR))
+	{
+		if (consume(ID))
+		{
+			if (consume(COLON))
+			{
+				if (baseType())
+				{
+					if (consume(SEMICOLON))
+						return 1;
+					else
+						afisareEroare("Lipseste ; la finalul declaratiei parametrului.\n");
+				}
+				else
+					afisareEroare("Lipseste tipul parametrului sau tipul este invalid.\n");
+			}
+			else
+				afisareEroare("Lipseste : dupa numele parametrului.\n");
+		}
+		else
+			afisareEroare("Lipseste numele parametrului.\n");
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// program ::= ( defVar | defFunc | block )* FINISH
+int program()
+{
+	int startIdx = idxCrtAtom;
+
+	for (;;)
+	{
+		if (defVar())
+		{
+			
+		}
+		else if (defFunc())
+		{
+			
+		}
+		else if (block())
+		{
+			
+		}
+		else
+			break;
+	}
+	if (consume(FINISH))
+	{
+		return 1;
+	}
+	else
+		afisareEroare("Eroara de sintaxa!\n");
+		//afisareEroare("Lipseste FINISH.\n");
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
 
 
 int main()
 {
 	analizatorLexical();
+
+	// analiza sintactica
+	if (program())
+	{
+		printf("Codul a fost compilat fara erori de sintaxa!\n");
+	}
+	else
+	{
+		printf("Eroare de sintaxa!\n");
+	}
+
 
 	return 0;
 }
