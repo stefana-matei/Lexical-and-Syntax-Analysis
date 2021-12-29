@@ -31,7 +31,7 @@ typedef struct {
 
 Atom atomi[MAX_ATOMI];
 int nrAtomi = 0;	// numarul de atomi din vectorul atomi
-int idxCrtAtom = 0;	// atomul curent pentru analiza sintactica
+int idxCrtAtom = 0;	// indexul atomului curent din atomi - pentru analiza sintactica
 
 char bufin[30001];
 char* pch;	// cursor la caracterul curent din bufin
@@ -800,18 +800,21 @@ int exprAssign()
 int exprComp()
 {
 	int startIdx = idxCrtAtom;
-
 	if (exprAdd())
 	{
 		if (consume(LESS) || consume(EQUAL))
 		{
-			if (exprAdd)
+			if (exprAdd())
 			{
 				return 1;
 			}
 			else
-				afisareEroare("Lipseste exprAdd dupa < sau dupa =.\n");
+				errPrint("lipseste exprAdd dupa < sau dupa =\n");
+			
+			idxCrtAtom = startIdx;
+			return 0;
 		}
+		return 1;
 	}
 
 	idxCrtAtom = startIdx;
@@ -887,6 +890,83 @@ int exprAdd()
 // exprMul ::= exprPrefix ( ( MUL | DIV ) exprPrefix )*
 int exprMul()
 {
+	int startIdx = idxCrtAtom;
+
+	if (exprPrefix())
+	{
+		for (;;)
+		{
+			if (consume(MUL) || consume(DIV))
+			{
+				if (exprPrefix)
+				{
+					;
+				}
+				else
+				{
+					afisareEroare("Lipseste exprPrefix dupa * sau dupa /.\n");
+					idxCrtAtom = startIdx;
+					return 0;
+				}
+			}
+			else
+				break;
+		}
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+// exprPrefix :: = (SUB | NOT) ? factor
+int exprPrefix()
+{
+	int startIdx = idxCrtAtom;
+
+	if (consume(SUB) || consume(NOT))
+	{
+		if (factor())
+		{
+			return 1;
+		}
+		else
+			afisareEroare("Lipseste factor dupa - sau dupa !.\n");
+	}
+
+	if (factor())
+	{
+		return 1;
+	}
+
+	idxCrtAtom = startIdx;
+	return 0;
+}
+
+
+//instr :: = expr ? SEMICOLON
+//          | IF LPAR expr RPAR block(ELSE block) ? END
+//			| RETURN expr SEMICOLON
+//			| WHILE LPAR expr RPAR block END
+int instr()
+{
+	int startIdx = idxCrtAtom;
+
+	if (expr())
+	{
+		if (consume(SEMICOLON))
+		{
+			return 1;
+		}
+		else
+			afisareEroare("Lipseste ; dupa expr.\n");
+	}
+	else if (consume(SEMICOLON))
+	{
+		return 1;
+	}
+
 	return 0;
 }
 
