@@ -566,7 +566,6 @@ void analizatorLexical()
 
 
 
-
 //--------------------------------------------------------------------------------
 //	analiza sintatica
 
@@ -808,7 +807,7 @@ int exprAssign()
 		}
 	}
 
-	if (exprComp)
+	if (exprComp())
 	{
 		return 1;
 	}
@@ -1201,9 +1200,18 @@ int program()
 
 	for (;;)
 	{
-		if (defVar()) {}
-		else if (defFunc()) {}
-		else if (block()) {}
+		if (defVar()) 
+		{
+
+		}
+		else if (defFunc())
+		{
+
+		}
+		else if (block())
+		{
+
+		}
 		else
 			break;
 	}
