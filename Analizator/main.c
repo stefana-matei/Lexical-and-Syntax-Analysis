@@ -560,7 +560,7 @@ void analizatorLexical()
 
 	}
 
-	afisareAtomiLexicali();
+	//afisareAtomiLexicali();
 	printf("\n\n");
 }
 
@@ -585,7 +585,7 @@ int consume(int cod)
 }
 
 
-// afiseaza locatia atomului curent (idxCrtAtom)
+// afiseaza linia unde este o eroare
 // afiseaza mesajul de eroare
 // iese din program
 void afisareEroare(const char* mesaj)
@@ -799,14 +799,15 @@ int exprAssign()
 				return 1;
 			}
 			else
-				afisareEroare("Lipseste expresia ce urmeaza dupa = .\n");
+				afisareEroare("Lipseste expresia ce urmeaza dupa = \n");
 		}
 		else
 		{
 			idxCrtAtom = startIdx;
 		}
 	}
-
+	
+	
 	if (exprComp())
 	{
 		return 1;
@@ -1143,9 +1144,7 @@ int funcParams()
 				}
 				else
 				{
-					afisareEroare("Lipseste parametru dupa virgula sau este virgula in plus.\n");
-					idxCrtAtom = startIdx;
-					return 0;
+					afisareEroare("Lipseste parametru functiei dupa virgula sau este virgula in plus.\n");
 				}
 			}
 			else
@@ -1220,7 +1219,7 @@ int program()
 		return 1;
 	}
 	else
-		afisareEroare("Eroara de sintaxa!\n");
+		afisareEroare("Eroare de sintaxa!\n");
 		//afisareEroare("Lipseste FINISH.\n");
 
 	idxCrtAtom = startIdx;
